@@ -1,3 +1,10 @@
+
+echo "Resetting UFW and setting default policies..."
+sudo ufw --force reset
+sudo ufw default deny incoming
+sudo ufw default allow outgoing
+
+
 echo "Blocking torrent ports..."
 # Common torrent ports
 sudo ufw deny out 6881:6889/tcp
