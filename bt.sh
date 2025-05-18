@@ -21,3 +21,8 @@ sudo ufw deny out 16881/tcp
 sudo ufw deny out 16881/udp
 sudo ufw deny out 6880:6999/tcp
 sudo ufw deny out 6880:6999/udp
+
+echo "Enabling UFW and turning on logging..."
+sudo ufw logging on
+sudo ufw --force enable
+sudo ufw status numbered
