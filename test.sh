@@ -15,6 +15,22 @@ for port in 2052 2053 2086 2087 2095 2096 8443 8880 8080 8888 80 443; do
   sudo ufw allow in $port/tcp
 done
 
+# Block inbound torrent ports
+sudo ufw deny in 6881:6889/tcp
+sudo ufw deny in 6881:6889/udp
+sudo ufw deny in 6969/tcp
+sudo ufw deny in 51413
+sudo ufw deny in 1337/tcp
+sudo ufw deny in 2710/tcp
+sudo ufw deny in 8999/tcp
+sudo ufw deny in 8999/udp
+sudo ufw deny in 42069/tcp
+sudo ufw deny in 42069/udp
+sudo ufw deny in 16881/tcp
+sudo ufw deny in 16881/udp
+sudo ufw deny in 6880:6999/tcp
+sudo ufw deny in 6880:6999/udp
+
 echo "Allowing essential outbound rules..."
 sudo ufw allow out 53                     # DNS
 sudo ufw allow out 80/tcp                 # HTTP
