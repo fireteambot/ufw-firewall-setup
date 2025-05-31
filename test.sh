@@ -30,13 +30,9 @@ echo "Blocking torrent ports..."
 sudo ufw deny out 6881:6889/tcp
 sudo ufw deny out 6881:6889/udp
 sudo ufw deny out 6969/tcp
-sudo ufw deny out 6969/udp
-sudo ufw deny out 51413/tcp
-sudo ufw deny out 51413/udp
+sudo ufw deny out 51413
 sudo ufw deny out 1337/tcp
-sudo ufw deny out 1337/udp
 sudo ufw deny out 2710/tcp
-sudo ufw deny out 2710/udp
 sudo ufw deny out 8999/tcp
 sudo ufw deny out 8999/udp
 sudo ufw deny out 42069/tcp
@@ -46,25 +42,9 @@ sudo ufw deny out 16881/udp
 sudo ufw deny out 6880:6999/tcp
 sudo ufw deny out 6880:6999/udp
 
-# Additional torrent ports
-sudo ufw deny out 4662/tcp
-sudo ufw deny out 4672/udp
-sudo ufw deny out 6346:6347/tcp
-sudo ufw deny out 6346:6347/udp
-sudo ufw deny out 6699/tcp
-sudo ufw deny out 6699/udp
-sudo ufw deny out 6771/tcp
-sudo ufw deny out 6771/udp
-sudo ufw deny out 1214/tcp
-sudo ufw deny out 1214/udp
-sudo ufw deny out 10000:11000/tcp        # Common for newer torrent clients
-sudo ufw deny out 10000:11000/udp
-sudo ufw deny out 25401/tcp              # Transmission default
-sudo ufw deny out 25401/udp
-sudo ufw deny out 30301/udp              # qBittorrent
-sudo ufw deny out 41830/tcp              # Deluge
-sudo ufw deny out 41830/udp
-sudo ufw deny out 49152:65535/tcp        # Windows default ephemeral range
+# DO NOT block full 10000–65535/udp anymore (used by games like FF)
+# sudo ufw deny out 10000:65535/udp
+# sudo ufw deny out 49152:65535/udp
 
 echo "Allowing messaging & media apps..."
 sudo ufw allow out 443/udp
@@ -73,7 +53,7 @@ sudo ufw allow out 19302/udp
 sudo ufw allow out 3478:3481/udp
 sudo ufw allow out 45395:45400/udp       # WhatsApp call support
 sudo ufw allow out 50000:60000/udp       # Media & game voice
-sudo ufw allow out 49152:65535/udp       # Allowing UDP for games while blocking TCP for torrents
+sudo ufw allow out 49152:65535/udp
 
 echo "Allowing gaming ports..."
 
