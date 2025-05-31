@@ -142,6 +142,11 @@ do
   sudo ufw allow from $ip proto udp
 done
 
+# WhatsApp Call Fix
+sudo ufw allow out 3478/udp
+sudo ufw allow out 45395:45400/udp
+sudo ufw allow out 50000:60000/udp
+
 echo "Enabling UFW and logging..."
 sudo ufw logging on
 sudo ufw --force enable
