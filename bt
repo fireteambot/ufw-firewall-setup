@@ -1,0 +1,13 @@
+#!/bin/bash
+
+case "$1" in
+  on)
+    bash /usr/local/bin/bt-on.sh
+    ;;
+  off)
+    bash /usr/local/bin/bt-off.sh
+    ;;
+  *)
+    echo "Usage: bt {on|off}"
+    ;;
+esac
