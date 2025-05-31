@@ -15,22 +15,6 @@ for port in 2052 2053 2086 2087 2095 2096 8443 8880 8080 8888 80 443; do
   sudo ufw allow in $port/tcp
 done
 
-# Block inbound torrent ports
-sudo ufw deny in 6881:6889/tcp
-sudo ufw deny in 6881:6889/udp
-sudo ufw deny in 6969/tcp
-sudo ufw deny in 51413
-sudo ufw deny in 1337/tcp
-sudo ufw deny in 2710/tcp
-sudo ufw deny in 8999/tcp
-sudo ufw deny in 8999/udp
-sudo ufw deny in 42069/tcp
-sudo ufw deny in 42069/udp
-sudo ufw deny in 16881/tcp
-sudo ufw deny in 16881/udp
-sudo ufw deny in 6880:6999/tcp
-sudo ufw deny in 6880:6999/udp
-
 echo "Allowing essential outbound rules..."
 sudo ufw allow out 53                     # DNS
 sudo ufw allow out 80/tcp                 # HTTP
@@ -42,7 +26,7 @@ for port in 2052 2053 2086 2087 2095 2096 8443 8880 8080; do
 done
 
 echo "Blocking torrent ports..."
-# Common torrent ports
+# Common torrent ports - outbound
 sudo ufw deny out 6881:6889/tcp
 sudo ufw deny out 6881:6889/udp
 sudo ufw deny out 6969/tcp
@@ -58,9 +42,22 @@ sudo ufw deny out 16881/udp
 sudo ufw deny out 6880:6999/tcp
 sudo ufw deny out 6880:6999/udp
 
-# DO NOT block full 10000–65535/udp anymore (used by games like FF)
-# sudo ufw deny out 10000:65535/udp
-# sudo ufw deny out 49152:65535/udp
+# Torrent ports - inbound
+sudo ufw deny in 6881:6889/tcp
+sudo ufw deny in 6881:6889/udp
+sudo ufw deny in 6969
+sudo ufw deny in 51413
+sudo ufw deny in 1337
+sudo ufw deny in 2710
+sudo ufw deny in 8999
+sudo ufw deny in 42069
+sudo ufw deny in 16881
+sudo ufw deny in 6880:6999
+
+# Block DHT and peer-to-peer protocols
+sudo ufw deny out 33445/udp
+sudo ufw deny in 33445/udp
+
 
 echo "Allowing messaging & media apps..."
 sudo ufw allow out 443/udp
