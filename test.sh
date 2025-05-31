@@ -14,32 +14,35 @@ sudo iptables -P INPUT ACCEPT
 sudo iptables -P FORWARD ACCEPT
 sudo iptables -P OUTPUT ACCEPT
 
-echo "[+] Blocking torrent keywords via string match..."
-for keyword in "BitTorrent" "BitTorrent protocol" "peer_id=" ".torrent" "announce" "info_hash" "tracker" "get_peers" "find_node" "announce_peer" "BitComet" "uTorrent"; do
+echo "[+] Blocking torrent ports..."
+sudo iptables -A OUTPUT -p tcp --dport 6881:6999 -j DROP
+sudo iptables -A OUTPUT -p udp --dport 6881:6999 -j DROP
+sudo iptables -A INPUT  -p tcp --dport 6881:6999 -j DROP
+sudo iptables -A INPUT  -p udp --dport 6881:6999 -j DROP
+
+sudo iptables -A OUTPUT -p tcp --dport 51413 -j DROP
+sudo iptables -A OUTPUT -p udp --dport 51413 -j DROP
+sudo iptables -A INPUT  -p tcp --dport 51413 -j DROP
+sudo iptables -A INPUT  -p udp --dport 51413 -j DROP
+
+echo "[+] Blocking torrent protocols via DPI..."
+for keyword in "BitTorrent" "BitTorrent protocol" "peer_id=" ".torrent" "announce" "info_hash" "tracker" "get_peers" "find_node" "announce_peer" "BitComet" "uTorrent" "magnet:"; do
     sudo iptables -A FORWARD -m string --string "$keyword" --algo bm -j DROP
     sudo iptables -A OUTPUT  -m string --string "$keyword" --algo bm -j DROP
     sudo iptables -A INPUT   -m string --string "$keyword" --algo bm -j DROP
 done
 
-echo "[+] Blocking common torrent ports..."
-for port in 6881 6882 6883 6884 6885 6886 6887 6888 6889 6969 51413 1337 2710 8999 42069 16881; do
-    sudo iptables -A INPUT -p tcp --dport $port -j DROP
-    sudo iptables -A INPUT -p udp --dport $port -j DROP
-    sudo iptables -A OUTPUT -p tcp --dport $port -j DROP
-    sudo iptables -A OUTPUT -p udp --dport $port -j DROP
-done
+echo "[+] Blocking DHT UDP (often used for peer discovery)..."
+sudo iptables -A OUTPUT -p udp --dport 6881:6999 -j DROP
+sudo iptables -A INPUT  -p udp --dport 6881:6999 -j DROP
+sudo iptables -A FORWARD -p udp --dport 6881:6999 -j DROP
 
-echo "[+] Blocking torrent port ranges..."
-sudo iptables -A OUTPUT -p tcp --dport 6880:6999 -j DROP
-sudo iptables -A OUTPUT -p udp --dport 6880:6999 -j DROP
-sudo iptables -A INPUT  -p tcp --dport 6880:6999 -j DROP
-sudo iptables -A INPUT  -p udp --dport 6880:6999 -j DROP
+echo "[+] Optional: Drop new outbound UDP with high ports (DHT/WebRTC risk)..."
+sudo iptables -A OUTPUT -p udp --dport 33434:65535 -m conntrack --ctstate NEW -j DROP
 
-echo "[+] Saving iptables rules..."
+echo "[+] Saving rules to persistent config..."
 sudo iptables-save | sudo tee /etc/iptables/rules.v4 > /dev/null
 sudo ip6tables-save | sudo tee /etc/iptables/rules.v6 > /dev/null
 
-echo "[+] Restarting iptables-persistent..."
 sudo systemctl restart netfilter-persistent
-
-echo "[✓] Torrent traffic blocking configured and saved."
+echo "[✓] Torrent traffic blocking applied and saved."
