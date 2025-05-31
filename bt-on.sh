@@ -23,30 +23,72 @@ if ! dpkg -s iptables-persistent &> /dev/null; then
   DEBIAN_FRONTEND=noninteractive apt install -y iptables-persistent
 fi
 
-# Block common torrent ports (TCP/UDP)
-iptables -A OUTPUT -p tcp --dport 6881:6999 -j DROP
-iptables -A OUTPUT -p udp --dport 6881:6999 -j DROP
-iptables -A INPUT  -p tcp --dport 6881:6999 -j DROP
-iptables -A INPUT  -p udp --dport 6881:6999 -j DROP
+# Define ports to NEVER block (whitelist)
+WHITELIST_PORTS=(
+  80    # HTTP
+  443   # HTTPS
+  53    # DNS
+  22    # SSH
+  25    # SMTP
+  587   # SMTP SSL
+  465   # SMTP SSL
+  110   # POP3
+  995   # POP3 SSL
+  143   # IMAP
+  993   # IMAP SSL
+  1194  # OpenVPN
+  5060  # SIP
+  5061  # SIP TLS
+  3478  # STUN/TURN
+  5349  # TURN over TLS
+  1935  # RTMP
+  5222  # XMPP
+  5223  # XMPP SSL
+  5228  # XMPP (Google)
+  5269  # XMPP Server
+  5280  # XMPP BOSH
+  5281  # XMPP BOSH SSL
+  3478  # STUN
+  5349  # STUN over TLS
+  10000 # Webmin
+  3389  # RDP
+  5900  # VNC
+  119   # NNTP
+  563   # NNTP SSL
+)
 
-iptables -A OUTPUT -p tcp --dport 51413 -j DROP
-iptables -A OUTPUT -p udp --dport 51413 -j DROP
-iptables -A INPUT  -p tcp --dport 51413 -j DROP
-iptables -A INPUT  -p udp --dport 51413 -j DROP
+# Block common torrent ports (TCP/UDP) except whitelisted ports
+for port in {6881..6999} 51413; do
+  if [[ ! " ${WHITELIST_PORTS[@]} " =~ " ${port} " ]]; then
+    iptables -A OUTPUT -p tcp --dport $port -j DROP
+    iptables -A OUTPUT -p udp --dport $port -j DROP
+    iptables -A INPUT -p tcp --dport $port -j DROP
+    iptables -A INPUT -p udp --dport $port -j DROP
+  fi
+done
 
 # Block by string match (may impact performance)
-for keyword in "BitTorrent" "BitTorrent protocol" "peer_id=" ".torrent" "announce" "info_hash" "tracker" "get_peers" "find_node" "announce_peer" "BitComet" "uTorrent" "magnet:"; do
-  iptables -A OUTPUT  -m string --string "$keyword" --algo bm -j DROP
-  iptables -A INPUT   -m string --string "$keyword" --algo bm -j DROP
+for keyword in "BitTorrent" "BitTorrent protocol" "peer_id=" ".torrent" "announce" "info_hash" "tracker" "get_peers" "find_node" "announce_peer" "BitComet" "uTorrent"; do
+  # Skip checking whitelisted ports for string matches
+  for port in "${WHITELIST_PORTS[@]}"; do
+    iptables -A OUTPUT -p tcp --dport $port -m string --string "$keyword" --algo bm -j ACCEPT
+    iptables -A INPUT -p tcp --sport $port -m string --string "$keyword" --algo bm -j ACCEPT
+  done
+  
+  # Apply string matching to non-whitelisted traffic
+  iptables -A OUTPUT -m string --string "$keyword" --algo bm -j DROP
+  iptables -A INPUT -m string --string "$keyword" --algo bm -j DROP
   iptables -A FORWARD -m string --string "$keyword" --algo bm -j DROP
 done
 
-# Block UDP DHT ports with rate limiting to avoid blocking all UDP
+# Block UDP DHT ports with rate limiting (excluding whitelisted ports)
 iptables -N UDP_DHT
 iptables -A UDP_DHT -m limit --limit 5/sec --limit-burst 10 -j RETURN
 iptables -A UDP_DHT -j DROP
-iptables -A OUTPUT -p udp --dport 1024:65535 -j UDP_DHT
-iptables -A INPUT -p udp --sport 1024:65535 -j UDP_DHT
+
+# Apply DHT blocking only to non-whitelisted ports
+iptables -A OUTPUT -p udp -m multiport ! --dports $(IFS=,; echo "${WHITELIST_PORTS[*]}") -j UDP_DHT
+iptables -A INPUT -p udp -m multiport ! --sports $(IFS=,; echo "${WHITELIST_PORTS[*]}") -j UDP_DHT
 
 # Block some known public tracker IPs (example list)
 TRACKER_IPS=(
@@ -65,4 +107,5 @@ iptables-save > /etc/iptables/rules.v4
 ip6tables-save > /etc/iptables/rules.v6
 systemctl restart netfilter-persistent
 
-echo "[✓] Advanced torrent blocking enabled."
+echo "[✓] Advanced torrent blocking enabled while preserving essential services."
+echo "    Whitelisted ports: ${WHITELIST_PORTS[@]}"
