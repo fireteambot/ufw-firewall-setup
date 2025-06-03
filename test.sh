@@ -1,6 +1,7 @@
 #!/bin/bash
 
-ACTION=${1:-enable}  # Default to "enable" if no argument is passed
+# Hardcode ACTION to "enable" to always apply torrent blocking
+ACTION="enable"
 
 echo "[+] Installing iptables-persistent..."
 echo iptables-persistent iptables-persistent/autosave_v4 boolean true | sudo debconf-set-selections
@@ -16,6 +17,7 @@ sudo iptables -P INPUT ACCEPT
 sudo iptables -P FORWARD ACCEPT
 sudo iptables -P OUTPUT ACCEPT
 
+# Always enable torrent blocking
 if [[ "$ACTION" == "enable" ]]; then
   echo "[+] Blocking torrent ports..."
   sudo iptables -A OUTPUT -p tcp --dport 6881:6999 -j DROP
@@ -54,4 +56,3 @@ sudo ip6tables-save | sudo tee /etc/iptables/rules.v6 > /dev/null
 
 sudo systemctl restart netfilter-persistent
 echo "[✓] Firewall rules saved and reloaded."
-
